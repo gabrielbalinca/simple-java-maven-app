@@ -11,47 +11,50 @@ pipeline {
                   command:
                   - cat
                   tty: true
-                - name: docker
-                  image: docker:dind
-                  securityContext:
-                    privileged: true
-                  tty: true
             '''
         }
     }
     stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Build') {
             steps {
                 container('maven') {
-                    sh 'mvn -B -DskipTests clean package';
+                    sh 'mvn -B -DskipTests clean package'
+                }
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
                 }
             }
         }
+
         stage('Test') {
             steps {
                 container('maven') {
-                    sh 'mvn test';
+                    sh 'mvn test'
                 }
             }
             post {
                 always {
-                    junit 'target/surefire-reports/*.xml';
+                    junit 'target/surefire-reports/*.xml'
                 }
             }
         }
-        stage('Deliver') { 
+
+        stage('Deliver') {
             steps {
                 container('maven') {
-                    sh './jenkins/scripts/deliver.sh';
-                }
-            }
-        }
-        stage('Docker') { 
-            steps {
-                container('docker') {
-                    sh 'docker ps';
+                    sh 'echo "Deliver step"'
                 }
             }
         }
     }
 }
+
